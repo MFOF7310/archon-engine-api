@@ -32,6 +32,9 @@ db.exec(`
         welcome_channel_id TEXT DEFAULT NULL,
         welcome_message TEXT DEFAULT 'Welcome to the server, {user}!',
         auto_role_id TEXT DEFAULT NULL,
+        automod_enabled INTEGER DEFAULT 0,
+        xp_multiplier REAL DEFAULT 1.0,
+        afk_enabled INTEGER DEFAULT 0,
         updated_at TEXT DEFAULT (datetime('now'))
     )
 `);
@@ -47,6 +50,13 @@ app.use(cors({
 
 app.use(cookieParser());
 app.use(express.json());
+
+// ============================================================
+// ROOT — Redirect to frontend
+// ============================================================
+app.get('/', (req, res) => {
+    res.redirect(`${process.env.FRONTEND_URL}/archon-engine-web/docs/index.html`);
+});
 
 // ============================================================
 // API ENDPOINTS
@@ -236,15 +246,18 @@ app.get('/api/guilds/:guildId/settings', async (req, res) => {
         let settings = db.prepare('SELECT * FROM guild_settings WHERE guild_id = ?').get(guildId);
 
         if (!settings) {
-            db.prepare('INSERT INTO guild_settings (guild_id) VALUES (?)').run(guildId);
-            settings = {
-                guild_id: guildId,
-                prefix: '!',
-                welcome_channel_id: null,
-                welcome_message: 'Welcome to the server, {user}!',
-                auto_role_id: null
-            };
-        }
+    db.prepare('INSERT INTO guild_settings (guild_id) VALUES (?)').run(guildId);
+    settings = {
+        guild_id: guildId,
+        prefix: '!',
+        welcome_channel_id: null,
+        welcome_message: 'Welcome to the server, {user}!',
+        auto_role_id: null,
+        automod_enabled: 0,
+        xp_multiplier: 1.0,
+        afk_enabled: 0
+    };
+}
 
         res.json({
             settings,
@@ -267,19 +280,22 @@ app.post('/api/guilds/:guildId/settings', async (req, res) => {
     try {
         jwt.verify(token, process.env.JWT_SECRET);
         const { guildId } = req.params;
-        const { prefix, welcome_channel_id, welcome_message, auto_role_id } = req.body;
+        const { prefix, welcome_channel_id, welcome_message, auto_role_id, automod_enabled, xp_multiplier, afk_enabled } = req.body;
 
         db.prepare(`
-            INSERT INTO guild_settings (guild_id, prefix, welcome_channel_id, welcome_message, auto_role_id, updated_at)
-            VALUES (?, ?, ?, ?, ?, datetime('now'))
+            INSERT INTO guild_settings (guild_id, prefix, welcome_channel_id, welcome_message, auto_role_id, automod_enabled, xp_multiplier, afk_enabled, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(guild_id) DO UPDATE SET
                 prefix = COALESCE(?, prefix),
                 welcome_channel_id = COALESCE(?, welcome_channel_id),
                 welcome_message = COALESCE(?, welcome_message),
                 auto_role_id = COALESCE(?, auto_role_id),
+                automod_enabled = COALESCE(?, automod_enabled),
+                xp_multiplier = COALESCE(?, xp_multiplier),
+                afk_enabled = COALESCE(?, afk_enabled),
                 updated_at = datetime('now')
-        `).run(guildId, prefix, welcome_channel_id, welcome_message, auto_role_id,
-               prefix, welcome_channel_id, welcome_message, auto_role_id);
+        `).run(guildId, prefix, welcome_channel_id, welcome_message, auto_role_id, automod_enabled ?? 0, xp_multiplier ?? 1.0, afk_enabled ?? 0,
+               prefix, welcome_channel_id, welcome_message, auto_role_id, automod_enabled ?? 0, xp_multiplier ?? 1.0, afk_enabled ?? 0);
 
         res.json({ success: true, message: 'Settings saved' });
 
