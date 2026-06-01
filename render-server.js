@@ -183,7 +183,7 @@ app.get('/api/auth/callback', async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-       const frontendHome = `${process.env.FRONTEND_URL}/archon-engine-web/?token=${sessionToken}`;
+       const frontendHome = `${process.env.FRONTEND_URL}/archon-engine-web/index.html?token=${sessionToken}`;
 res.redirect(frontendHome);
 
     } catch (error) {
