@@ -55,7 +55,8 @@ app.use(express.json());
 // ROOT — Redirect to frontend
 // ============================================================
 app.get('/', (req, res) => {
-    res.redirect(`${process.env.FRONTEND_URL}/archon-engine-web/docs/index.html`);
+    const frontend = process.env.FRONTEND_URL || 'https://MFOF7310.github.io';
+    res.redirect(`${frontend}/archon-engine-web/docs/index.html`);
 });
 
 // ============================================================
