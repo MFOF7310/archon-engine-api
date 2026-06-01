@@ -18,7 +18,8 @@ const app = express();
 // ============================================================
 // DATABASE — Direct connection to your SQLite file
 // ============================================================
-const dbPath = process.env.DB_PATH || path.join(__dirname, 'data', 'database.sqlite');
+const fs = require('fs');
+const dbPath = '/tmp/database.sqlite';
 const db = new Database(dbPath, { timeout: 10000 });
 db.pragma('journal_mode = WAL');
 console.log('[DB] Connected to database');
