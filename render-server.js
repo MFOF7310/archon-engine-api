@@ -57,30 +57,44 @@ app.get('/health', (req, res) => {
     res.json({ status: 'operational', service: 'archon-dashboard-api', timestamp: Date.now() });
 });
 
-// Stats — returns static data since bot runs separately
-// Replace with real data if you connect to Discord API
-app.get('/api/stats', async (req, res) => {
-    try {
-        // These are placeholders since the bot is on Pterodactyl
-        // For live stats, use Discord REST API with bot token
-        const response = await fetch('https://discord.com/api/v10/users/@me', {
-            headers: { Authorization: `Bot ${process.env.DISCORD_TOKEN}` }
-        });
-        
-        if (response.ok) {
-            // Bot is online — return placeholder stats
-            // For real stats, you'd need guild count from the bot
-            return res.json({
-                servers: '7',
-                users: '3',
-                ping: '134'
-            });
-        }
-        
-        res.json({ servers: '---', users: '---', ping: '---' });
-    } catch (err) {
-        res.json({ servers: '---', users: '---', ping: '---' });
+// ============================================================
+// LIVE STATS CACHE — Updated by bot via sync endpoint
+// ============================================================
+let liveStats = {
+    servers: '---',
+    users: '---',
+    ping: '---',
+    lastUpdated: null
+};
+
+// Public stats endpoint — returns cached live data
+app.get('/api/stats', (req, res) => {
+    res.json({
+        servers: liveStats.servers,
+        users: liveStats.users,
+        ping: liveStats.ping,
+        lastUpdated: liveStats.lastUpdated
+    });
+});
+
+// Stats sync endpoint — called by Pterodactyl bot
+app.post('/api/stats/sync', (req, res) => {
+    const { secret, servers, users, ping } = req.body;
+
+    // Verify the request comes from your bot
+    if (secret !== process.env.JWT_SECRET) {
+        return res.status(403).json({ error: 'Unauthorized' });
     }
+
+    liveStats = {
+        servers: servers || '---',
+        users: users || '---',
+        ping: ping || '---',
+        lastUpdated: new Date().toISOString()
+    };
+
+    console.log(`[STATS] Synced — ${liveStats.servers} servers | ${liveStats.users} users | ${liveStats.ping}ms`);
+    res.json({ success: true, stats: liveStats });
 });
 
 // OAuth2 Login
