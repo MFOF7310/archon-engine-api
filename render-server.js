@@ -56,7 +56,7 @@ app.use(express.json());
 // ============================================================
 app.get('/', (req, res) => {
     const frontend = process.env.FRONTEND_URL || 'https://MFOF7310.github.io';
-    res.redirect(`${frontend}/archon-engine-web/docs/index.html`);
+    res.redirect(`${frontend}/archon-engine-web/`);
 });
 
 // ============================================================
@@ -183,7 +183,7 @@ app.get('/api/auth/callback', async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
-        const frontendHome = `${process.env.FRONTEND_URL}/archon-engine-web/docs/index.html?token=${sessionToken}`;
+       const frontendHome = `${process.env.FRONTEND_URL}/archon-engine-web/?token=${sessionToken}`;
 res.redirect(frontendHome);
 
     } catch (error) {
@@ -208,7 +208,7 @@ app.get('/api/auth/me', (req, res) => {
 // Logout
 app.get('/api/auth/logout', (req, res) => {
     res.clearCookie('session');
-    res.redirect(process.env.FRONTEND_URL);
+    res.redirect(`${process.env.FRONTEND_URL}/archon-engine-web/`);
 });
 
 // Guild list — reads from database
